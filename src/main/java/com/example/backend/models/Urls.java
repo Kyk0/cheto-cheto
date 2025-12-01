@@ -12,7 +12,10 @@ public class Urls {
     @Column(name = "id", updatable = false, nullable = false)
     private Long id;
 
+    @Column(columnDefinition = "text")
     private String title;
+
+    @Column(columnDefinition = "text")
     private String url;
 
     private Long time_usec;

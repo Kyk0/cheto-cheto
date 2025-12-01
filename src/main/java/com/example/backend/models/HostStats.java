@@ -15,7 +15,7 @@ public class HostStats {
     @JoinColumn(name = "host_id", nullable = false, unique = true)
     private Hosts host;
 
-    private Double pred_topic;
+    private String pred_topic;
     private Double pred_prob;
     private Double prob_news;
     private Double prob_shopping;
@@ -166,11 +166,11 @@ public class HostStats {
         this.pred_prob = pred_prob;
     }
 
-    public Double getPred_topic() {
+    public String getPred_topic() {
         return pred_topic;
     }
 
-    public void setPred_topic(Double pred_topic) {
+    public void setPred_topic(String pred_topic) {
         this.pred_topic = pred_topic;
     }
 
