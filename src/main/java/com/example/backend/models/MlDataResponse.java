@@ -1,11 +1,10 @@
 package com.example.backend.models;
 
-public class FlatMlData {
+public class MlDataResponse {
 
     private String title;
     private String url;
     private Long time_usec;
-
     private String host;
 
     private String pred_topic;
@@ -26,7 +25,7 @@ public class FlatMlData {
     private Double prob_government;
     private Double prob_other;
 
-    public FlatMlData() {
+    public MlDataResponse() {
     }
 
     public String getTitle() {
