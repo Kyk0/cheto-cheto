@@ -4,6 +4,7 @@ package com.example.backend.services;
 import com.example.backend.models.*;
 import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 import tools.jackson.core.type.TypeReference;
 import com.example.backend.repositories.HostStatsRepository;
 import com.example.backend.repositories.HostsRepository;
@@ -23,15 +24,18 @@ public class HistoryImportService {
     private final HostStatsRepository hostStatsRepository;
     private final UrlsRepository urlsRepository;
     private final ObjectMapper objectMapper;
+    private final String historySamplePath;
 
     public HistoryImportService(HostStatsRepository hostStatsRepository,
                                 HostsRepository hostsRepository,
                                 UrlsRepository urlsRepository,
-                                ObjectMapper objectMapper) {
+                                ObjectMapper objectMapper,
+                                @Value("${app.ml.history-sample.path}") String historySamplePath) {
         this.hostStatsRepository = hostStatsRepository;
         this.hostsRepository = hostsRepository;
         this.urlsRepository = urlsRepository;
         this.objectMapper = objectMapper;
+        this.historySamplePath = historySamplePath;
     }
 
     public List<MlDataResponse> parseJson(String path) {
@@ -99,7 +103,7 @@ public class HistoryImportService {
     @PostConstruct
     @Transactional
     public void loadSampleDataFromFile() {
-        List<MlDataResponse> rows = parseJson("src/main/resources/data/history_sample_data.json");
+        List<MlDataResponse> rows = parseJson(historySamplePath);
         updateHistorySample(rows);
     }
 
