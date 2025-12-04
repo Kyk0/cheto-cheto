@@ -41,7 +41,7 @@ public class MlClientService {
     }
 
 
-    public String sendZipToMl(MultipartFile file, String path) {
+    public List<MlDataResponse> sendSafariDbToMl(MultipartFile file, String path) {
         String url = mlBaseUrl + path;
 
         ByteArrayResource fileResource;
@@ -49,7 +49,9 @@ public class MlClientService {
             fileResource = new ByteArrayResource(file.getBytes()) {
                 @Override
                 public String getFilename() {
-                    return file.getOriginalFilename();
+                    return file.getOriginalFilename() != null
+                            ? file.getOriginalFilename()
+                            : "history.db";
                 }
             };
         } catch (IOException e) {
@@ -65,19 +67,19 @@ public class MlClientService {
         HttpEntity<MultiValueMap<String, Object>> request =
                 new HttpEntity<>(body, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
+        ResponseEntity<MlDataResponse[]> response = restTemplate.exchange(
                 url,
                 HttpMethod.POST,
                 request,
-                String.class
+                MlDataResponse[].class
         );
 
-        if (!response.getStatusCode().is2xxSuccessful()) {
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             throw new IllegalStateException(
                     "ML service returned status " + response.getStatusCode()
             );
         }
 
-        return response.getBody();
+        return List.of(response.getBody());
     }
 }

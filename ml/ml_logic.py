@@ -1,9 +1,14 @@
-# ml_logic.py
 from typing import List, Mapping, Any
+import time
+import logging
+
 import numpy as np
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import normalize
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 TOPIC_DEFS = [
     ("news", "online news, media, newspapers, breaking news"),
@@ -63,16 +68,30 @@ def _compute_probs(embeddings: np.ndarray, topic_embeddings: np.ndarray, tempera
 def load_model_if_needed() -> None:
     global _model, _topic_embeddings
     if _model is None:
+        t0 = time.perf_counter()
+        logger.info("Loading SentenceTransformer model '%s'...", MODEL_NAME)
         _model = SentenceTransformer(MODEL_NAME)
         _topic_embeddings = _model.encode(topic_texts, convert_to_numpy=True)
+        t1 = time.perf_counter()
+        logger.info(
+            "Model '%s' loaded, encoded %d topic texts in %.3f s",
+            MODEL_NAME,
+            len(topic_texts),
+            t1 - t0,
+            )
 
 
 def classify_history_rows(rows: List[Mapping[str, Any]]) -> List[dict]:
     if not rows:
+        logger.info("classify_history_rows called with 0 rows – nothing to do.")
         return []
+
+    t_total_start = time.perf_counter()
+    logger.info("classify_history_rows: received %d rows", len(rows))
 
     load_model_if_needed()
 
+    t0 = time.perf_counter()
     df = pd.DataFrame(rows)
 
     if "host" not in df.columns:
@@ -84,9 +103,28 @@ def classify_history_rows(rows: List[Mapping[str, Any]]) -> List[dict]:
     host_list = host_text_series.index.tolist()
     host_texts = host_text_series.values
 
-    host_embeddings = _model.encode(host_texts, convert_to_numpy=True, show_progress_bar=False)
+    logger.info(
+        "classify_history_rows: %d unique hosts aggregated from %d rows",
+        len(host_list),
+        len(df),
+    )
 
+    t_encode_start = time.perf_counter()
+    host_embeddings = _model.encode(host_texts, convert_to_numpy=True, show_progress_bar=False)
+    t_encode_end = time.perf_counter()
+    logger.info(
+        "classify_history_rows: encoded %d host texts in %.3f s",
+        len(host_list),
+        t_encode_end - t_encode_start,
+        )
+
+    t_probs_start = time.perf_counter()
     sims_host, probs_host = _compute_probs(host_embeddings, _topic_embeddings, temperature=TEMPERATURE)
+    t_probs_end = time.perf_counter()
+    logger.info(
+        "classify_history_rows: computed topic probabilities in %.3f s",
+        t_probs_end - t_probs_start,
+        )
 
     max_idx = probs_host.argmax(axis=1)
     max_prob = probs_host.max(axis=1)
@@ -111,5 +149,13 @@ def classify_history_rows(rows: List[Mapping[str, Any]]) -> List[dict]:
         for label in topic_labels:
             d[f"prob_{label}"] = float(row[f"prob_{label}"])
         out.append(d)
+
+    t_total_end = time.perf_counter()
+    logger.info(
+        "classify_history_rows: finished %d rows (%d hosts) in %.3f s",
+        len(out),
+        len(host_list),
+        t_total_end - t_total_start,
+        )
 
     return out

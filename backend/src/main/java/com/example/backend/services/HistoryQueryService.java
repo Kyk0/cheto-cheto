@@ -22,7 +22,6 @@ public class HistoryQueryService {
     private final HistoryImportService historyImportService;
     private final MlClientService mlClientService;
     private final String mlPredictPath;
-    private final String mlPredictZipPath;
     private static final long MAX_UPLOAD_SIZE_BYTES = 500L * 1024 * 1024;
 
     public HistoryQueryService(HostsRepository hostsRepository,
@@ -39,8 +38,7 @@ public class HistoryQueryService {
         this.refreshOnRequest = refreshOnRequest;
         this.historyImportService = historyImportService;
         this.mlClientService = mlClientService;
-        this.mlPredictPath =  mlPredictPath
-        mlPredictZipPath = mlPredictPath + "/safari";
+        this.mlPredictPath =  mlPredictPath;
     }
 
     public List<MlDataResponse> getHistorySample() {

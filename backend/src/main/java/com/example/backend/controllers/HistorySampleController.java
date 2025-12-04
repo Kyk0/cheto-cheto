@@ -22,8 +22,9 @@ public class HistorySampleController {
         return historyQueryService.getHistorySample();
     }
 
+    @CrossOrigin(origins = "*")
     @PostMapping("/history/upload")
-    public String uploadHistory(@RequestParam("file") MultipartFile file) {
+    public List<MlDataResponse> uploadHistory(@RequestParam("file") MultipartFile file) {
         return historyQueryService.processUploadedHistory(file);
     }
 }
