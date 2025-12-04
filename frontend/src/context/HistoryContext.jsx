@@ -1,6 +1,6 @@
 // src/context/HistoryContext.jsx
 import { createContext, useContext, useState, useCallback } from "react";
-import { fetchSampleHistory, uploadSafariHistory } from "../api/historyApi";
+import { getHistorySample, uploadHistoryFile } from "../api/historyApi";
 
 const HistoryContext = createContext(null);
 
@@ -13,7 +13,7 @@ export function HistoryProvider({ children }) {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await fetchSampleHistory();
+            const data = await getHistorySample();
             setItems(data || []);
         } catch (e) {
             setError(e.message || "Failed to load sample history");
@@ -27,7 +27,7 @@ export function HistoryProvider({ children }) {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await uploadSafariHistory(file);
+            const data = await uploadHistoryFile(file);
             setItems(data || []);
         } catch (e) {
             setError(e.message || "Failed to upload history");
