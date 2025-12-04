@@ -22,6 +22,7 @@ public class HistoryQueryService {
     private final HistoryImportService historyImportService;
     private final MlClientService mlClientService;
     private final String mlPredictPath;
+    private final String mlPredictZipPath;
     private static final long MAX_UPLOAD_SIZE_BYTES = 500L * 1024 * 1024;
 
     public HistoryQueryService(HostsRepository hostsRepository,
@@ -38,7 +39,8 @@ public class HistoryQueryService {
         this.refreshOnRequest = refreshOnRequest;
         this.historyImportService = historyImportService;
         this.mlClientService = mlClientService;
-        this.mlPredictPath =  mlPredictPath;
+        this.mlPredictPath =  mlPredictPath
+        mlPredictZipPath = mlPredictPath + "/safari";
     }
 
     public List<MlDataResponse> getHistorySample() {
@@ -54,18 +56,16 @@ public class HistoryQueryService {
         }
     }
 
-    public String processUploadedHistory(MultipartFile file) {
+    public List<MlDataResponse> processUploadedHistory(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file must not be empty");
         }
 
         if (file.getSize() > MAX_UPLOAD_SIZE_BYTES) {
-            throw new IllegalArgumentException(
-                    "Uploaded file is too large: " + file.getSize() + " bytes"
-            );
+            throw new IllegalArgumentException("Uploaded file is too large: " + file.getSize());
         }
 
-        return mlClientService.sendZipToMl(file, mlPredictPath);
+        return mlClientService.sendSafariDbToMl(file, "/predict-history/safari");
     }
 
 
