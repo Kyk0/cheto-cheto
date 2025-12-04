@@ -37,6 +37,18 @@ services:
     networks:
       - app-network
 
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
