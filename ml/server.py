@@ -46,3 +46,7 @@ def predict(items: List[MlDataRequest]):
     rows = [item.dict() for item in items]
     result_dicts = classify_history_rows(rows)
     return [MlDataResponse(**d) for d in result_dicts]
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}

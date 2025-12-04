@@ -1,6 +1,8 @@
 FROM eclipse-temurin:21-jdk
 
-WORKDIR /app
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /backend
 
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
