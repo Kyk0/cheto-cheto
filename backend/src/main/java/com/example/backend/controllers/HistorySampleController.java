@@ -2,12 +2,11 @@ package com.example.backend.controllers;
 
 import com.example.backend.models.MlDataResponse;
 import com.example.backend.services.HistoryQueryService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api")
 public class HistorySampleController {
@@ -18,7 +17,8 @@ public class HistorySampleController {
     }
 
     @GetMapping("/history-sample")
-    List<MlDataResponse> getHistorySample() {
+    public List<MlDataResponse> getHistorySample() {
         return historyQueryService.getHistorySample();
     }
+
 }
