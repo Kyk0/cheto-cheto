@@ -6,7 +6,9 @@ import com.example.backend.repositories.HostStatsRepository;
 import com.example.backend.repositories.HostsRepository;
 import com.example.backend.repositories.UrlsRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -20,6 +22,7 @@ public class HistoryQueryService {
     private final HistoryImportService historyImportService;
     private final MlClientService mlClientService;
     private final String mlPredictPath;
+    private static final long MAX_UPLOAD_SIZE_BYTES = 500L * 1024 * 1024;
 
     public HistoryQueryService(HostsRepository hostsRepository,
                                HostStatsRepository hostStatsRepository,
@@ -51,7 +54,19 @@ public class HistoryQueryService {
         }
     }
 
+    public String processUploadedHistory(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Uploaded file must not be empty");
+        }
 
+        if (file.getSize() > MAX_UPLOAD_SIZE_BYTES) {
+            throw new IllegalArgumentException(
+                    "Uploaded file is too large: " + file.getSize() + " bytes"
+            );
+        }
+
+        return mlClientService.sendZipToMl(file, mlPredictPath);
+    }
 
 
 }

@@ -3,10 +3,16 @@ package com.example.backend.services;
 import com.example.backend.models.MlDataRequest;
 import com.example.backend.models.MlDataResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -35,4 +41,43 @@ public class MlClientService {
     }
 
 
+    public String sendZipToMl(MultipartFile file, String path) {
+        String url = mlBaseUrl + path;
+
+        ByteArrayResource fileResource;
+        try {
+            fileResource = new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return file.getOriginalFilename();
+                }
+            };
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read uploaded file", e);
+        }
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("file", fileResource);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        HttpEntity<MultiValueMap<String, Object>> request =
+                new HttpEntity<>(body, headers);
+
+        ResponseEntity<String> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                request,
+                String.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new IllegalStateException(
+                    "ML service returned status " + response.getStatusCode()
+            );
+        }
+
+        return response.getBody();
+    }
 }
