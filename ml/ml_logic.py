@@ -11,21 +11,21 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 TOPIC_DEFS = [
-    ("news", "online news, media, newspapers, breaking news"),
-    ("shopping", "online shops, e-commerce, buy products"),
-    ("social", "social networks, messaging, communities"),
-    ("video", "video platforms, streaming, movies, series"),
-    ("education", "universities, courses, learning, tutorials"),
-    ("work", "productivity, work tools, project management"),
-    ("finance", "banking, investing, trading, personal finance"),
-    ("travel", "flights, hotels, tickets, travel planning"),
-    ("gaming", "games, game platforms, online gaming"),
-    ("entertainment", "music, fun, leisure, fandom"),
-    ("tech", "technology, dev tools, programming, IT"),
-    ("services", "online services, utilities, tools, SaaS"),
-    ("health", "health, medicine, fitness, wellbeing"),
-    ("government", "government, public services, official sites"),
-    ("other", "misc, uncategorized, everything else"),
+    ("news", "news websites, online media, journalism, articles, breaking news, current events, CNN, BBC, New York Times"),
+    ("shopping", "online stores, marketplaces, product pages, price comparison, checkout, e-commerce, Amazon, eBay, AliExpress"),
+    ("social", "social networks, chats, messaging apps, feeds, forums, communities, user profiles, Facebook, Instagram, X, Reddit"),
+    ("video", "video platforms, streaming services, online videos, clips, movies, tv shows, live streams, YouTube, Netflix, Twitch"),
+    ("education", "universities, online courses, lectures, tutorials, learning platforms, documentation, Coursera, Khan Academy, edX, Wikipedia"),
+    ("work", "email, calendars, office tools, collaboration, project management, productivity apps, dashboards, Gmail, Google Drive, Slack, Notion, Trello"),
+    ("finance", "online banking, brokers, trading platforms, crypto exchanges, budgeting, personal finance, PayPal, Revolut, Robinhood, Binance, Coinbase"),
+    ("travel", "flights, airlines, trains, hotels, maps, trip planning, tourism, tickets, bookings, Booking.com, Airbnb, Skyscanner, Google Maps"),
+    ("gaming", "video games, game platforms, launchers, esports, game guides, mods, gaming forums, Steam, Epic Games Store, PlayStation Network, Xbox Live"),
+    ("entertainment", "music, fandoms, memes, comics, hobbies, pop culture, leisure, Spotify, Disney+, TikTok, IMDb"),
+    ("tech", "programming, developer docs, APIs, code hosting, IT infrastructure, cloud, dev tools, GitHub, Stack Overflow, Hacker News, AWS Console"),
+    ("services", "online tools, SaaS dashboards, generators, converters, cloud services, utilities, web apps, Zoom, Dropbox, Canva, Google Forms"),
+    ("health", "medicine, symptoms, treatments, doctors, pharmacies, fitness, nutrition, wellbeing, WebMD, Healthline, Mayo Clinic"),
+    ("government", "government portals, public services, taxes, regulations, official documents, municipal sites, usa.gov, gov.uk, irs.gov, state.gov"),
+    ("other", "miscellaneous, mixed content, uncategorized, pages that do not clearly match other topics"),
 ]
 
 topic_labels = [t[0] for t in TOPIC_DEFS]
