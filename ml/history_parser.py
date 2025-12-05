@@ -1,11 +1,13 @@
-import sqlite3
-from urllib.parse import urlparse
 import os
 import tempfile
 import sqlite3
+import random
+from urllib.parse import urlparse
+
+SAMPLE_FRACTION = 0.05
+
 
 def read_history_db(raw_bytes: bytes) -> list[dict]:
-
     if not raw_bytes:
         return []
 
@@ -37,7 +39,11 @@ def read_history_db(raw_bytes: bytes) -> list[dict]:
             return []
 
         rows: list[dict] = []
+
         for r in cur.fetchall():
+            if SAMPLE_FRACTION < 1.0 and random.random() > SAMPLE_FRACTION:
+                continue
+
             url = r["url"]
             if not url:
                 continue
