@@ -7,7 +7,12 @@ function getNodeId(n) {
     return typeof n === "object" ? n.id : n
 }
 
-export default function GraphCanvas({ items }) {
+export default function GraphCanvas({
+    items,
+    onNodeClick,
+    searchQuery,
+    onBackgroundClick,
+}) {
     const { nodes, links, adjacency } = useMemo(
         () => buildForceGraphData(items),
         [items],
@@ -22,23 +27,30 @@ export default function GraphCanvas({ items }) {
         if (!fg) return
         if (!nodes.length) return
 
-        const charge = d3.forceManyBody().strength(-25)
+        // Physics: Balanced for new sizes
+        const charge = d3.forceManyBody().strength(-400)
+        const forceX = d3.forceX(0).strength(0.08)
+        const forceY = d3.forceY(0).strength(0.08)
 
         const link = d3
             .forceLink()
             .id(n => n.id)
-            .distance(l => (l.kind === "hub" ? 65 : 45))
-            .strength(l => (l.kind === "hub" ? 1.05 : 1))
+            .distance(l => (l.kind === "hub" ? 160 : 100))
+            .strength(l => (l.kind === "hub" ? 0.4 : 0.1))
 
         const collision = d3.forceCollide().radius(n => {
-            const r = Number(n.radius) || 10
-            return n.kind === "hub" ? r * 2.1 : r * 1.8
-        })
+            const r = Number(n.radius) || 5
+            return r * 2.0 // Tighter spacing
+        }).strength(0.8)
 
         fg.d3Force("charge", charge)
         fg.d3Force("link", link)
         fg.d3Force("collision", collision)
-        fg.d3Force("center", d3.forceCenter(0, 0))
+        fg.d3Force("center", null)
+        fg.d3Force("x", forceX)
+        fg.d3Force("y", forceY)
+
+        fg.d3ReheatSimulation()
 
         hasFitRef.current = false
     }, [nodes, links])
@@ -50,10 +62,10 @@ export default function GraphCanvas({ items }) {
 
         const id = setTimeout(() => {
             if (!hasFitRef.current) {
-                fg.zoomToFit(400, 60)
+                fg.zoomToFit(600, 100)
                 hasFitRef.current = true
             }
-        }, 300)
+        }, 800)
 
         return () => clearTimeout(id)
     }, [nodes])
@@ -75,11 +87,24 @@ export default function GraphCanvas({ items }) {
         return highlightIds.has(node.id)
     }
 
+    function isNeighborNode(node) {
+        if (!hoverNode || !highlightIds) return false
+        return highlightIds.has(node.id) && node.id !== hoverNode.id
+    }
+
     function isHighlightedLink(link) {
         if (!highlightIds) return true
         const sid = getNodeId(link.source)
         const tid = getNodeId(link.target)
         return highlightIds.has(sid) && highlightIds.has(tid)
+    }
+
+    // Search Logic
+    function isSearchMatch(node) {
+        if (!searchQuery) return true
+        const q = searchQuery.toLowerCase()
+        return (node.label || "").toLowerCase().includes(q) ||
+            (node.topic || "").toLowerCase().includes(q)
     }
 
     function nodeCanvasObject(node, ctx, globalScale) {
@@ -91,57 +116,67 @@ export default function GraphCanvas({ items }) {
             return
         }
 
+        const isHovered = hoverNode && node.id === hoverNode.id
+        const isNeighbor = isNeighborNode(node)
         const highlighted = isHighlightedNode(node)
-        const alpha = highlighted ? 1 : 0.2
-        const baseRadius = Number(node.radius) || 10
-        const label = node.label || ""
+        const matchesSearch = isSearchMatch(node)
 
-        const scale = Math.min(globalScale, 4)
-        const fontSize =
-            node.kind === "hub"
-                ? Math.max(10, baseRadius * 0.9 * scale * 0.25)
-                : Math.max(8, baseRadius * 0.7 * scale * 0.25)
+        // Visibility Logic
+        let alpha = 1
+        if (searchQuery) {
+            // Search Mode: Dim everything except matches
+            alpha = matchesSearch ? 1 : 0.1
+        } else {
+            // Hover Mode: Dim non-neighbors
+            alpha = highlighted ? 1 : 0.1
+        }
+
+        // Size Logic: "Make maximum size small and minimum bigger"
+        let baseRadius = Number(node.radius) || 5
+        // Clamp radius to a tighter range (e.g., 6 to 25 instead of 5 to 50)
+        baseRadius = Math.max(6, Math.min(baseRadius, 25))
+
+        // Hover Scale: Subtle, not dramatic
+        if (isHovered) baseRadius *= 1.2
+        if (isNeighbor) baseRadius *= 1.1
+
+        const label = node.label || ""
 
         ctx.save()
         ctx.globalAlpha = alpha
 
-        const innerR = baseRadius
-        const glowR = baseRadius * 2.4
-
-        const gradient = ctx.createRadialGradient(
-            node.x,
-            node.y,
-            innerR * 0.1,
-            node.x,
-            node.y,
-            glowR,
-        )
-        gradient.addColorStop(0, node.color || "#38bdf8")
-        gradient.addColorStop(1, "rgba(15,23,42,0)")
-
+        // Node Body
         ctx.beginPath()
-        ctx.fillStyle = gradient
-        ctx.arc(node.x, node.y, glowR, 0, 2 * Math.PI)
+        ctx.fillStyle = node.color || "#6366f1"
+        ctx.arc(node.x, node.y, baseRadius, 0, 2 * Math.PI)
         ctx.fill()
 
-        ctx.beginPath()
-        ctx.fillStyle = node.color || "#38bdf8"
-        ctx.strokeStyle = "#020617"
-        ctx.lineWidth = highlighted ? 2.4 : 1.8
-        ctx.arc(node.x, node.y, innerR, 0, 2 * Math.PI)
-        ctx.fill()
+        // Border
+        ctx.strokeStyle = "#ffffff"
+        ctx.lineWidth = (isHovered ? 3 : 1.5) / globalScale
         ctx.stroke()
 
-        if (label) {
-            ctx.font = `${fontSize}px system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif`
-            ctx.textAlign = "center"
-            ctx.textBaseline = "top"
-            ctx.fillStyle = "rgba(226,232,240,0.94)"
-            ctx.strokeStyle = "rgba(15,23,42,0.85)"
-            ctx.lineWidth = 3
+        // Labels
+        const fontSize = Math.max(4, baseRadius * 0.6)
+        const screenFontSize = fontSize * globalScale
 
-            const textY = node.y + innerR + 6
+        // Show label if hovered, neighbor, or matches search (if searching)
+        const showLabel = isHovered || isNeighbor || (searchQuery && matchesSearch) || (screenFontSize > 5)
+
+        if (showLabel && label) {
+            ctx.font = `${isHovered ? "700" : "600"} ${fontSize}px system-ui, sans-serif`
+            ctx.textAlign = "center"
+            ctx.textBaseline = "middle"
+
+            // Outline
+            ctx.strokeStyle = "rgba(0,0,0,0.8)" // Dark outline for light text
+            ctx.lineWidth = 3 / globalScale
+            ctx.lineJoin = "round"
+
+            const textY = node.y + baseRadius + (fontSize * 0.8)
+
             ctx.strokeText(label, node.x, textY)
+            ctx.fillStyle = "#f1f5f9" // Slate-100 text (Light for dark theme)
             ctx.fillText(label, node.x, textY)
         }
 
@@ -149,50 +184,69 @@ export default function GraphCanvas({ items }) {
     }
 
     function linkColor(link) {
-        const base = link.color || "#475569"
+        const srcId = getNodeId(link.source)
+        const srcNode = typeof link.source === 'object' ? link.source : nodes.find(n => n.id === srcId)
+        const base = srcNode?.color || "#94a3b8"
+
+        if (searchQuery) {
+            // In search mode, dim links unless both ends match? Or just keep them dim.
+            return "rgba(148,163,184,0.1)"
+        }
+
         if (!highlightIds) return base
-        return isHighlightedLink(link) ? base : "rgba(51,65,85,0.16)"
+        return isHighlightedLink(link) ? base : "rgba(148,163,184,0.05)"
     }
 
     function linkWidth(link) {
-        const core =
-            link.kind === "hub"
-                ? 0.8
-                : 0.4 + (Math.min(link.weight || 1, 10) / 10) * 1.8
+        const core = link.kind === "hub" ? 1.0 : 0.5
+        if (searchQuery) return 0.2
         if (!highlightIds) return core
-        return isHighlightedLink(link) ? core + 0.5 : 0.25
+        return isHighlightedLink(link) ? core + 1.0 : 0.1
     }
 
     function handleNodeHover(node) {
         setHoverNode(node || null)
     }
 
+    function handleBgClick() {
+        // Clear search if clicked on background? 
+        // Or just clear hover.
+        // Let's rely on the parent for search clearing for now.
+    }
+
     if (!nodes.length) {
         return (
-            <div className="w-full h-[620px] bg-slate-950 border border-slate-800 flex items-center justify-center text-xs text-slate-400">
+            <div className="w-full h-full flex items-center justify-center text-sm text-slate-400">
                 No hosts to display.
             </div>
         )
     }
 
     return (
-        <div className="w-full h-[620px] bg-slate-950 border border-slate-800">
+        <div className="w-full h-full overflow-hidden">
             <ForceGraph2D
                 ref={fgRef}
                 graphData={{ nodes, links }}
-                backgroundColor="#020617"
+                backgroundColor="rgba(0,0,0,0)" // Transparent for gradient bg
                 nodeId="id"
                 nodeRelSize={4}
-                nodeVal={node => Number(node.radius) || 10}
-                nodeColor={() => "#000000"}
+                nodeVal={node => Number(node.radius) || 5}
+                nodeColor={node => node.color}
                 nodeCanvasObject={nodeCanvasObject}
                 linkColor={linkColor}
                 linkWidth={linkWidth}
                 linkDirectionalParticles={0}
                 linkCurvature={0}
                 onNodeHover={handleNodeHover}
+                onNodeClick={onNodeClick}
+                onBackgroundClick={onBackgroundClick} // Pass up to clear search
                 enableNodeDrag={true}
-                cooldownTicks={120}
+                // Stability: High decay to stop jumping
+                cooldownTicks={Infinity}
+                d3AlphaDecay={0.05}
+                d3VelocityDecay={0.4}
+                minZoom={0.1}
+                maxZoom={8}
             />
         </div>
     )

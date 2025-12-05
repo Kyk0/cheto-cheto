@@ -1,19 +1,19 @@
 const TOPIC_COLORS = {
-    news: "#f97373",
-    shopping: "#fbbf54",
-    social: "#fb7185",
-    video: "#4ade80",
-    education: "#38bdf8",
-    work: "#818cf8",
-    finance: "#22c55e",
-    travel: "#2dd4bf",
-    gaming: "#a855f7",
-    entertainment: "#f472b6",
-    tech: "#60a5fa",
-    services: "#c4b5fd",
-    health: "#34d399",
-    government: "#facc15",
-    other: "#94a3b8",
+    news: "#ef4444", // Red-500
+    shopping: "#f97316", // Orange-500
+    social: "#ec4899", // Pink-500
+    video: "#10b981", // Emerald-500
+    education: "#06b6d4", // Cyan-500
+    work: "#6366f1", // Indigo-500
+    finance: "#22c55e", // Green-500
+    travel: "#14b8a6", // Teal-500
+    gaming: "#a855f7", // Purple-500
+    entertainment: "#d946ef", // Fuchsia-500
+    tech: "#3b82f6", // Blue-500
+    services: "#8b5cf6", // Violet-500
+    health: "#84cc16", // Lime-500
+    government: "#eab308", // Yellow-500
+    other: "#94a3b8", // Slate-400
 }
 
 function topicColor(topic) {
@@ -24,42 +24,42 @@ export function buildForceGraphData(items) {
     const hostMap = Object.create(null)
     const events = []
 
-    ;(items || []).forEach(row => {
-        const host = row.host
-        if (!host) return
+        ; (items || []).forEach(row => {
+            const host = row.host
+            if (!host) return
 
-        const topic = row.pred_topic || "other"
-        const probRaw = row.pred_prob
-        const prob = probRaw ? Number(probRaw) : 0
-        const url = row.url || ""
-        const timeRaw = row.time_usec ?? null
-        const t = timeRaw != null && Number.isFinite(Number(timeRaw))
-            ? Number(timeRaw) / 1000
-            : null
+            const topic = row.pred_topic || "other"
+            const probRaw = row.pred_prob
+            const prob = probRaw ? Number(probRaw) : 0
+            const url = row.url || ""
+            const timeRaw = row.time_usec ?? null
+            const t = timeRaw != null && Number.isFinite(Number(timeRaw))
+                ? Number(timeRaw) / 1000
+                : null
 
-        let item = hostMap[host]
-        if (!item) {
-            item = hostMap[host] = {
-                host,
-                topic,
-                maxProb: prob,
-                urls: [],
-                count: 0,
+            let item = hostMap[host]
+            if (!item) {
+                item = hostMap[host] = {
+                    host,
+                    topic,
+                    maxProb: prob,
+                    urls: [],
+                    count: 0,
+                }
             }
-        }
-        item.count += 1
-        if (url && !item.urls.includes(url)) {
-            item.urls.push(url)
-        }
-        if (prob > item.maxProb) {
-            item.maxProb = prob
-            item.topic = topic
-        }
+            item.count += 1
+            if (url && !item.urls.includes(url)) {
+                item.urls.push(url)
+            }
+            if (prob > item.maxProb) {
+                item.maxProb = prob
+                item.topic = topic
+            }
 
-        if (t != null) {
-            events.push({ host, t })
-        }
-    })
+            if (t != null) {
+                events.push({ host, t })
+            }
+        })
 
     const hosts = Object.values(hostMap)
     if (!hosts.length) {
@@ -94,8 +94,8 @@ export function buildForceGraphData(items) {
         maxCount = 1
     }
 
-    const MIN_RADIUS = 6
-    const MAX_RADIUS = 24
+    const MIN_RADIUS = 12
+    const MAX_RADIUS = 60
     function radiusForCount(c) {
         if (maxCount === minCount) return (MIN_RADIUS + MAX_RADIUS) / 2
         const t = (c - minCount) / (maxCount - minCount)
@@ -110,8 +110,8 @@ export function buildForceGraphData(items) {
         maxReq = 1
     }
 
-    const HUB_MIN_RADIUS = 18
-    const HUB_MAX_RADIUS = 32
+    const HUB_MIN_RADIUS = 30
+    const HUB_MAX_RADIUS = 80
     function hubRadiusForTopic(topic) {
         const req = topicStats[topic]?.requests ?? 0
         if (maxReq === minReq) return (HUB_MIN_RADIUS + HUB_MAX_RADIUS) / 2
@@ -208,7 +208,8 @@ export function buildForceGraphData(items) {
     let hostLinks = Array.from(edgesMap.values())
     if (hostLinks.length > 0) {
         hostLinks.sort((a, b) => b.weight - a.weight)
-        const keep = Math.max(1, Math.ceil(hostLinks.length * 0.5))
+        // Keep top 80% of connections
+        const keep = Math.max(1, Math.ceil(hostLinks.length * 0.8))
         hostLinks = hostLinks.slice(0, keep)
     }
 

@@ -11,7 +11,13 @@ const TABS = ["stats", "graph", "history"];
 
 export default function ExplorePage() {
     const [activeTab, setActiveTab] = useState("stats");
+    const [historyFilter, setHistoryFilter] = useState("");
     const { items, isLoading, error } = useHistory();
+
+    const handleViewHistory = (filter) => {
+        setHistoryFilter(filter);
+        setActiveTab("history");
+    };
 
     // базовые состояния загрузки / ошибки / пустых данных
     let content;
@@ -25,12 +31,12 @@ export default function ExplorePage() {
     } else if (error) {
         content = (
             <div className="flex-1 flex flex-col items-center justify-center gap-2 text-sm">
-                <div className="text-red-600">
+                <div className="text-red-600 font-medium">
                     {error}
                 </div>
                 <Link
                     to="/load"
-                    className="text-slate-700 underline text-xs"
+                    className="text-indigo-600 hover:text-indigo-700 underline text-xs font-medium"
                 >
                     Go back to load history
                 </Link>
@@ -42,7 +48,7 @@ export default function ExplorePage() {
                 <div>No history loaded.</div>
                 <Link
                     to="/load"
-                    className="text-slate-700 underline text-xs"
+                    className="text-indigo-600 hover:text-indigo-700 underline text-xs font-medium"
                 >
                     Load sample or upload your history
                 </Link>
@@ -54,53 +60,55 @@ export default function ExplorePage() {
             <>
                 <TabsBar activeTab={activeTab} onChange={setActiveTab} />
 
-                <div className="mt-4 flex flex-col items-center w-full">
+                <div className="mt-6 flex flex-col items-center w-full flex-1 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === "stats" && <StatsView items={items} />}
-                    {activeTab === "graph" && <GraphView items={items} />}
-                    {activeTab === "history" && <HistoryView items={items} />}
+                    {activeTab === "graph" && (
+                        <GraphView items={items} onViewHistory={handleViewHistory} />
+                    )}
+                    {activeTab === "history" && (
+                        <HistoryView items={items} initialFilter={historyFilter} />
+                    )}
                 </div>
             </>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
             <AppNav />
 
-            <main className="flex-1 flex flex-col items-center py-6 px-4 w-full">
+            <main className="flex-1 flex flex-col items-center py-8 px-6 w-full h-full overflow-hidden max-w-[1600px] mx-auto">
                 {content}
             </main>
         </div>
-    );
+    )
 }
 
 function TabsBar({ activeTab, onChange }) {
     return (
-        <div className="flex justify-center gap-4">
-            {TABS.map((tab) => {
-                const isActive = activeTab === tab;
+        <div className="flex justify-center gap-1 bg-white p-1.5 border border-slate-200 rounded-xl shadow-sm mb-2">
+            {TABS.map(tab => {
+                const isActive = activeTab === tab
                 const label =
-                    tab === "stats" ? "Stats" :
-                        tab === "graph" ? "Graph" :
-                            "History";
+                    tab === "stats" ? "Overview" : tab === "graph" ? "Graph" : "History"
 
                 return (
                     <button
                         key={tab}
                         onClick={() => onChange(tab)}
                         className={`
-              px-4 py-2 text-xs uppercase tracking-wide
-              border-b-2
-              transition-colors duration-150
+              px-6 py-2 text-xs font-bold uppercase tracking-wide rounded-lg
+              transition-all duration-200
               ${isActive
-                            ? "border-slate-900 text-slate-900"
-                            : "border-transparent text-slate-500 hover:text-slate-800"}
+                                ? "bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-100"
+                                : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                            }
             `}
                     >
                         {label}
                     </button>
-                );
+                )
             })}
         </div>
-    );
+    )
 }

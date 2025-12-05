@@ -15,9 +15,11 @@ export function HistoryProvider({ children }) {
         try {
             const data = await getHistorySample();
             setItems(data || []);
+            return data;
         } catch (e) {
             setError(e.message || "Failed to load sample history");
             setItems([]);
+            throw e;
         } finally {
             setIsLoading(false);
         }
@@ -29,9 +31,11 @@ export function HistoryProvider({ children }) {
         try {
             const data = await uploadHistoryFile(file);
             setItems(data || []);
+            return data;
         } catch (e) {
             setError(e.message || "Failed to upload history");
             setItems([]);
+            throw e;
         } finally {
             setIsLoading(false);
         }

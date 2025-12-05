@@ -17,6 +17,7 @@ public class HistorySampleController {
         this.historyQueryService = historyQueryService;
     }
 
+    @CrossOrigin(origins = "*")
     @GetMapping("/history-sample")
     public List<MlDataResponse> getHistorySample() {
         return historyQueryService.getHistorySample();
