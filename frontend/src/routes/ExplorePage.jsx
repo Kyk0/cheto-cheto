@@ -1,117 +1,106 @@
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+// src/routes/ExplorePage.jsx
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useHistory } from "../context/HistoryContext";
+import AppNav from "../components/layout/AppNav";
+import StatsView from "../components/explore/StatsView";
+import GraphView from "../components/explore/GraphView";
+import HistoryView from "../components/explore/HistoryView";
 
-function ExplorePage() {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { items, isLoading, error, loadSample } = useHistory();
+const TABS = ["stats", "graph", "history"];
 
-    const mode = location.state?.mode || "user";
+export default function ExplorePage() {
+    const [activeTab, setActiveTab] = useState("stats");
+    const { items, isLoading, error } = useHistory();
 
-    useEffect(() => {
-        if (mode === "sample" && (!items || items.length === 0)) {
-            loadSample().catch(() => {});
-        }
-    }, [mode, items, loadSample]);
+    // базовые состояния загрузки / ошибки / пустых данных
+    let content;
 
-    function handleBackHome() {
-        navigate("/");
-    }
-
-    const isStillLoading =
-        isLoading || (mode === "sample" && (!items || items.length === 0));
-
-    if (isStillLoading) {
-        return (
-            <div
-                style={{
-                    minHeight: "100vh",
-                    background: "#eee",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "16px",
-                }}
-            >
-                <h1>Exploring your history…</h1>
-                <p>
-                    {error
-                        ? `Error: ${error}`
-                        : mode === "sample"
-                            ? "Loading demo data, please wait…"
-                            : "Processing your history…"}
-                </p>
-                <button onClick={handleBackHome}>Back home</button>
+    if (isLoading) {
+        content = (
+            <div className="flex-1 flex items-center justify-center text-sm text-slate-500">
+                Loading history…
             </div>
         );
-    }
-
-    if (!items || items.length === 0) {
-        return (
-            <div style={{ padding: "24px" }}>
-                <h1>Explore history</h1>
-                <p>No history data available.</p>
-                <button onClick={handleBackHome}>Back home</button>
+    } else if (error) {
+        content = (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 text-sm">
+                <div className="text-red-600">
+                    {error}
+                </div>
+                <Link
+                    to="/load"
+                    className="text-slate-700 underline text-xs"
+                >
+                    Go back to load history
+                </Link>
             </div>
+        );
+    } else if (!items || items.length === 0) {
+        content = (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 text-sm text-slate-500">
+                <div>No history loaded.</div>
+                <Link
+                    to="/load"
+                    className="text-slate-700 underline text-xs"
+                >
+                    Load sample or upload your history
+                </Link>
+            </div>
+        );
+    } else {
+        // нормальный режим: данные есть
+        content = (
+            <>
+                <TabsBar activeTab={activeTab} onChange={setActiveTab} />
+
+                <div className="mt-4 flex flex-col items-center w-full">
+                    {activeTab === "stats" && <StatsView items={items} />}
+                    {activeTab === "graph" && <GraphView items={items} />}
+                    {activeTab === "history" && <HistoryView items={items} />}
+                </div>
+            </>
         );
     }
 
     return (
-        <div style={{ padding: "24px" }}>
-            <h1>Explore history</h1>
-            <p style={{ margin: "8px 0" }}>
-                Loaded entries: {items.length}
-                {mode === "sample" ? " (demo sample)" : " (your file)"}
-            </p>
+        <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col">
+            <AppNav />
 
-            <button onClick={handleBackHome} style={{ marginBottom: "16px" }}>
-                Back home
-            </button>
-
-            <div
-                style={{
-                    border: "1px solid #ccc",
-                    borderRadius: "4px",
-                    padding: "8px",
-                    maxHeight: "70vh",
-                    overflowY: "auto",
-                    fontSize: "14px",
-                }}
-            >
-                {items.map((item, idx) => (
-                    <div
-                        key={idx}
-                        style={{
-                            paddingBottom: "8px",
-                            marginBottom: "8px",
-                            borderBottom: "1px solid #eee",
-                        }}
-                    >
-                        <div style={{ fontWeight: "bold" }}>
-                            {item.title || "(no title)"}
-                        </div>
-                        <div style={{ color: "#555" }}>
-                            {item.url || "(no url)"}
-                        </div>
-                        <div style={{ marginTop: "4px" }}>
-                            <span style={{ fontWeight: "bold" }}>Host:</span>{" "}
-                            {item.host}
-                        </div>
-                        <div>
-                            <span style={{ fontWeight: "bold" }}>
-                                Predicted topic:
-                            </span>{" "}
-                            {item.pred_topic}{" "}
-                            {item.pred_prob != null &&
-                                `(${(item.pred_prob * 100).toFixed(1)}%)`}
-                        </div>
-                    </div>
-                ))}
-            </div>
+            <main className="flex-1 flex flex-col items-center py-6 px-4 w-full">
+                {content}
+            </main>
         </div>
     );
 }
 
-export default ExplorePage;
+function TabsBar({ activeTab, onChange }) {
+    return (
+        <div className="flex justify-center gap-4">
+            {TABS.map((tab) => {
+                const isActive = activeTab === tab;
+                const label =
+                    tab === "stats" ? "Stats" :
+                        tab === "graph" ? "Graph" :
+                            "History";
+
+                return (
+                    <button
+                        key={tab}
+                        onClick={() => onChange(tab)}
+                        className={`
+              px-4 py-2 text-xs uppercase tracking-wide
+              border-b-2
+              transition-colors duration-150
+              ${isActive
+                            ? "border-slate-900 text-slate-900"
+                            : "border-transparent text-slate-500 hover:text-slate-800"}
+            `}
+                    >
+                        {label}
+                    </button>
+                );
+            })}
+        </div>
+    );
+}

@@ -23,7 +23,7 @@ export function HistoryProvider({ children }) {
         }
     }, []);
 
-    const uploadUserHistory = useCallback(async (file) => {
+    const uploadHistory = useCallback(async (file) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -42,7 +42,7 @@ export function HistoryProvider({ children }) {
         isLoading,
         error,
         loadSample,
-        uploadUserHistory,
+        uploadHistory,
     };
 
     return (
