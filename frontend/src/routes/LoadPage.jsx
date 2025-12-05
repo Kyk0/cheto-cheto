@@ -6,6 +6,7 @@ import AppNav from "../components/layout/AppNav"
 
 export default function LoadPage() {
     const [file, setFile] = useState(null)
+    const [zipFile, setZipFile] = useState(null)
     const [localLoading, setLocalLoading] = useState(false)
     const navigate = useNavigate()
     const { uploadHistory, loadSample } = useHistory()
@@ -16,12 +17,18 @@ export default function LoadPage() {
         }
     }
 
+    const handleZipChange = e => {
+        if (e.target.files && e.target.files[0]) {
+            setZipFile(e.target.files[0])
+        }
+    }
+
     const handleUpload = async () => {
-        if (!file) return
+        if (!file && !zipFile) return
         setLocalLoading(true)
 
         try {
-            await uploadHistory(file)
+            await uploadHistory(file, zipFile)
             navigate("/explore")
         } catch (err) {
             console.error(err)
@@ -57,76 +64,101 @@ export default function LoadPage() {
                             </p>
                         </div>
 
-                        <label
-                            className={`
-                            flex flex-col items-center justify-center w-full h-40
-                            border-2 border-dashed rounded-xl cursor-pointer
-                            transition-all duration-200 group
-                            ${file
-                                    ? "border-indigo-200 bg-indigo-50/50"
-                                    : "border-slate-200 hover:border-indigo-400 hover:bg-slate-50"
-                                }
-                        `}
-                        >
-                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                <Upload
-                                    className={`w-8 h-8 mb-3 transition-colors ${file
-                                        ? "text-indigo-500"
-                                        : "text-slate-400 group-hover:text-indigo-500"
-                                        }`}
+                        {/* Safari History DB File Input */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Safari History (DB)</label>
+                            <label
+                                className={`
+                                flex flex-col items-center justify-center w-full h-32
+                                border-2 border-dashed rounded-xl cursor-pointer
+                                transition-all duration-200 group
+                                ${file
+                                        ? "border-indigo-200 bg-indigo-50/50"
+                                        : "border-slate-200 hover:border-indigo-400 hover:bg-slate-50"
+                                    }
+                            `}
+                            >
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <Database
+                                        className={`w-8 h-8 mb-3 transition-colors ${file
+                                            ? "text-indigo-500"
+                                            : "text-slate-400 group-hover:text-indigo-500"
+                                            }`}
+                                    />
+                                    <p className="mb-1 text-sm text-slate-600 font-medium text-center">
+                                        {file ? (
+                                            <span className="text-indigo-600 font-semibold truncate max-w-[200px] block">
+                                                {file.name}
+                                            </span>
+                                        ) : (
+                                            <span>
+                                                <span className="text-indigo-600">Click to upload DB</span>
+                                            </span>
+                                        )}
+                                    </p>
+                                    <p className="text-xs text-slate-400">.db</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                    accept=".db"
                                 />
-                                <p className="mb-1 text-sm text-slate-600 font-medium">
-                                    {file ? (
-                                        <span className="text-indigo-600 font-semibold">
-                                            File selected
-                                        </span>
-                                    ) : (
-                                        <span>
-                                            <span className="text-indigo-600">Click to upload</span> or
-                                            drag &amp; drop
-                                        </span>
-                                    )}
-                                </p>
-                                <p className="text-xs text-slate-400">.json, .db, .zip</p>
-                            </div>
-                            <input
-                                type="file"
-                                className="hidden"
-                                onChange={handleFileChange}
-                                accept=".json,.db,.zip"
-                            />
-                        </label>
+                            </label>
+                        </div>
 
-                        {file && (
-                            <div className="mt-4 flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100 animate-in fade-in slide-in-from-top-2">
-                                <div className="p-2 bg-white rounded-md shadow-sm border border-slate-100">
-                                    {file.name.endsWith(".db") ? (
-                                        <Database className="w-4 h-4 text-indigo-500" />
-                                    ) : file.name.endsWith(".zip") ? (
-                                        <Archive className="w-4 h-4 text-indigo-500" />
-                                    ) : (
-                                        <FileText className="w-4 h-4 text-indigo-500" />
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-slate-700 truncate">
-                                        {file.name}
+                        {/* Google Takeout ZIP File Input */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Google Takeout (ZIP)</label>
+                            <label
+                                className={`
+                                flex flex-col items-center justify-center w-full h-32
+                                border-2 border-dashed rounded-xl cursor-pointer
+                                transition-all duration-200 group
+                                ${zipFile
+                                        ? "border-indigo-200 bg-indigo-50/50"
+                                        : "border-slate-200 hover:border-indigo-400 hover:bg-slate-50"
+                                    }
+                            `}
+                            >
+                                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <Archive
+                                        className={`w-8 h-8 mb-3 transition-colors ${zipFile
+                                            ? "text-indigo-500"
+                                            : "text-slate-400 group-hover:text-indigo-500"
+                                            }`}
+                                    />
+                                    <p className="mb-1 text-sm text-slate-600 font-medium text-center">
+                                        {zipFile ? (
+                                            <span className="text-indigo-600 font-semibold truncate max-w-[200px] block">
+                                                {zipFile.name}
+                                            </span>
+                                        ) : (
+                                            <span>
+                                                <span className="text-indigo-600">Click to upload ZIP</span>
+                                            </span>
+                                        )}
                                     </p>
-                                    <p className="text-xs text-slate-400">
-                                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                                    </p>
+                                    <p className="text-xs text-slate-400">.zip</p>
                                 </div>
-                            </div>
-                        )}
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    onChange={handleZipChange}
+                                    accept=".zip"
+                                />
+                            </label>
+                        </div>
+
 
                         <button
                             onClick={handleUpload}
-                            disabled={!file || localLoading}
+                            disabled={(!file && !zipFile) || localLoading}
                             className={`
                             mt-8 w-full py-3.5 px-4 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200/50
                             flex items-center justify-center gap-2
                             transition-all duration-200
-                            ${!file || localLoading
+                            ${(!file && !zipFile) || localLoading
                                     ? "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none"
                                     : "bg-indigo-600 text-white hover:bg-indigo-700 hover:-translate-y-0.5"
                                 }

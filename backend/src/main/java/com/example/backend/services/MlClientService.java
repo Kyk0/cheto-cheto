@@ -21,13 +21,11 @@ public class MlClientService {
     private final String mlBaseUrl;
     private final RestTemplate restTemplate;
 
-
     public MlClientService(@Value("${app.ml.base-url}") String mlBaseUrl) {
 
         this.mlBaseUrl = mlBaseUrl;
         this.restTemplate = new RestTemplate();
     }
-
 
     public List<MlDataResponse> requestPrediction(List<MlDataRequest> mlDataRequest, String path) {
         String url = mlBaseUrl + path;
@@ -35,49 +33,79 @@ public class MlClientService {
         MlDataResponse[] response = restTemplate.postForObject(
                 url,
                 mlDataRequest,
-                MlDataResponse[].class
-        );
+                MlDataResponse[].class);
         return response != null ? List.of(response) : List.of();
     }
 
-
-    public List<MlDataResponse> sendSafariDbToMl(MultipartFile file, String path) {
+    public List<MlDataResponse> sendSafariDbToMl(MultipartFile file, MultipartFile zipFile, String path) {
         String url = mlBaseUrl + path;
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
 
-        ByteArrayResource fileResource;
-        try {
-            fileResource = new ByteArrayResource(file.getBytes()) {
-                @Override
-                public String getFilename() {
-                    return file.getOriginalFilename() != null
-                            ? file.getOriginalFilename()
-                            : "history.db";
-                }
-            };
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read uploaded file", e);
+        if (file != null && !file.isEmpty()) {
+            ByteArrayResource fileResource;
+            try {
+                fileResource = new ByteArrayResource(file.getBytes()) {
+                    @Override
+                    public String getFilename() {
+                        return file.getOriginalFilename() != null
+                                ? file.getOriginalFilename()
+                                : "history.db";
+                    }
+                };
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read uploaded file", e);
+            }
+            body.add("file", fileResource);
+        } else if (zipFile != null && !zipFile.isEmpty()) {
+            // Fallback: If no DB file is provided but a ZIP is, send the ZIP as "file"
+            // to satisfy the ML service interface which likely expects a "file" part.
+            // We give it a .zip extension in the filename so the receiver might know.
+            ByteArrayResource fileResource;
+            try {
+                fileResource = new ByteArrayResource(zipFile.getBytes()) {
+                    @Override
+                    public String getFilename() {
+                        return zipFile.getOriginalFilename() != null
+                                ? zipFile.getOriginalFilename()
+                                : "data.zip";
+                    }
+                };
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read uploaded zip file", e);
+            }
+            body.add("file", fileResource);
         }
 
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", fileResource);
+        if (zipFile != null && !zipFile.isEmpty()) {
+            try {
+                ByteArrayResource zipResource = new ByteArrayResource(zipFile.getBytes()) {
+                    @Override
+                    public String getFilename() {
+                        return zipFile.getOriginalFilename() != null
+                                ? zipFile.getOriginalFilename()
+                                : "data.zip";
+                    }
+                };
+                body.add("zip", zipResource);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to read uploaded zip file", e);
+            }
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-        HttpEntity<MultiValueMap<String, Object>> request =
-                new HttpEntity<>(body, headers);
+        HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<MlDataResponse[]> response = restTemplate.exchange(
                 url,
                 HttpMethod.POST,
                 request,
-                MlDataResponse[].class
-        );
+                MlDataResponse[].class);
 
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             throw new IllegalStateException(
-                    "ML service returned status " + response.getStatusCode()
-            );
+                    "ML service returned status " + response.getStatusCode());
         }
 
         return List.of(response.getBody());

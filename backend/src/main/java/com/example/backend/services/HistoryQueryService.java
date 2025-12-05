@@ -6,7 +6,7 @@ import com.example.backend.repositories.HostStatsRepository;
 import com.example.backend.repositories.HostsRepository;
 import com.example.backend.repositories.UrlsRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,16 +54,19 @@ public class HistoryQueryService {
         }
     }
 
-    public List<MlDataResponse> processUploadedHistory(MultipartFile file) {
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException("Uploaded file must not be empty");
+    public List<MlDataResponse> processUploadedHistory(MultipartFile file, MultipartFile zipFile) {
+        boolean hasFile = file != null && !file.isEmpty();
+        boolean hasZip = zipFile != null && !zipFile.isEmpty();
+
+        if (!hasFile && !hasZip) {
+            throw new IllegalArgumentException("At least one file (DB or ZIP) must be provided");
         }
 
-        if (file.getSize() > MAX_UPLOAD_SIZE_BYTES) {
+        if (hasFile && file.getSize() > MAX_UPLOAD_SIZE_BYTES) {
             throw new IllegalArgumentException("Uploaded file is too large: " + file.getSize());
         }
 
-        List<MlDataResponse> responses = mlClientService.sendSafariDbToMl(file, "/predict-history/safari");
+        List<MlDataResponse> responses = mlClientService.sendSafariDbToMl(file, zipFile, "/predict-history/safari");
 
         // Normalize timestamps if they are in Mac Absolute Time (seconds since 2001)
         // Unix Epoch (1970) vs Mac Epoch (2001) difference is 978307200 seconds

@@ -25,11 +25,11 @@ export function HistoryProvider({ children }) {
         }
     }, []);
 
-    const uploadHistory = useCallback(async (file) => {
+    const uploadHistory = useCallback(async (file, zipFile) => {
         setIsLoading(true);
         setError(null);
         try {
-            const data = await uploadHistoryFile(file);
+            const data = await uploadHistoryFile(file, zipFile);
             setItems(data || []);
             return data;
         } catch (e) {

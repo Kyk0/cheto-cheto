@@ -11,7 +11,7 @@ export default function AppNav() {
                 <div className="bg-indigo-50 p-1.5 rounded-lg">
                     <Activity className="w-5 h-5 text-indigo-600" />
                 </div>
-                <span className="tracking-tight text-lg">MyCoolHistory</span>
+                <span className="tracking-tight text-lg">mycoolhistory.app</span>
             </Link>
 
             <nav className="flex items-center gap-6">

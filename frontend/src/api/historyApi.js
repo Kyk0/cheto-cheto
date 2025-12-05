@@ -11,13 +11,18 @@ export async function getHistorySample() {
 }
 
 
-export async function uploadHistoryFile(file) {
-    if (!file) {
+export async function uploadHistoryFile(file, zipFile) {
+    if (!file && !zipFile) {
         throw new Error("No file selected");
     }
 
     const formData = new FormData();
-    formData.append("file", file);
+    if (file) {
+        formData.append("file", file);
+    }
+    if (zipFile) {
+        formData.append("zip", zipFile);
+    }
 
     const res = await fetch("http://localhost:8080/api/history/upload", {
         method: "POST",

@@ -25,7 +25,8 @@ public class HistorySampleController {
 
     @CrossOrigin(origins = "*")
     @PostMapping("/history/upload")
-    public List<MlDataResponse> uploadHistory(@RequestParam("file") MultipartFile file) {
-        return historyQueryService.processUploadedHistory(file);
+    public List<MlDataResponse> uploadHistory(@RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "zip", required = false) MultipartFile zipFile) {
+        return historyQueryService.processUploadedHistory(file, zipFile);
     }
 }
