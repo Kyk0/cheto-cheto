@@ -1,6 +1,7 @@
 import { useState } from "react"
 import GraphCanvas from "../../lib/graph/GraphCanvas"
 import NodeDetailsPanel from "./NodeDetailsPanel"
+import { Search } from "lucide-react"
 
 export default function GraphView({ items, onViewHistory }) {
     const [selectedNode, setSelectedNode] = useState(null)
@@ -11,7 +12,7 @@ export default function GraphView({ items, onViewHistory }) {
     const [searchQuery, setSearchQuery] = useState("")
 
     return (
-        <section className="w-full h-[450px] flex flex-col relative bg-white border border-slate-200 overflow-hidden shadow-sm rounded-xl">
+        <section className="w-full h-[600px] flex flex-col relative bg-white border border-slate-200 overflow-hidden shadow-sm rounded-xl">
             {/* Background Gradient - Removed for pure white */}
             {/* <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50 opacity-50 pointer-events-none"></div> */}
 

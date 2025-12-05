@@ -19,6 +19,13 @@ export default function ExplorePage() {
         setActiveTab("history");
     };
 
+    const handleTabChange = (tab) => {
+        setActiveTab(tab);
+        if (tab !== "history") {
+            setHistoryFilter("");
+        }
+    };
+
     // базовые состояния загрузки / ошибки / пустых данных
     let content;
 
@@ -58,7 +65,7 @@ export default function ExplorePage() {
         // нормальный режим: данные есть
         content = (
             <>
-                <TabsBar activeTab={activeTab} onChange={setActiveTab} />
+                <TabsBar activeTab={activeTab} onChange={handleTabChange} />
 
                 <div className="mt-6 flex flex-col items-center w-full flex-1 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === "stats" && <StatsView items={items} />}
