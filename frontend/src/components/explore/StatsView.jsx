@@ -3,34 +3,49 @@ import { useMemo } from "react"
 export default function StatsView({ items }) {
     const totalItems = items?.length ?? 0
 
+    // --- 0. Pre-process Items with Time ---
+    const cleanItems = useMemo(() => {
+        if (!items) return []
+        return items
+            .map(i => {
+                let t = 0
+                // Handle various time formats
+                if (i.time_usec) t = Number(i.time_usec) / 1000
+                else if (i.time) t = Number(i.time)
+
+                // Sanity check for reasonable year (e.g. > 1990) to filter bad data
+                // 631152000000 is roughly year 1990
+                if (t < 631152000000) t = 0
+
+                return { ...i, t }
+            })
+            .filter(i => i.t && Number.isFinite(i.t))
+            .sort((a, b) => a.t - b.t)
+    }, [items])
+
     // --- 1. Basic Counts & Time Range ---
     const { hostCounts, topicCounts, timeRange } = useMemo(() => {
         const hCounts = {}
         const tCounts = {}
-        let minTime = Infinity
-        let maxTime = -Infinity
 
         if (!items) return { hostCounts: {}, topicCounts: {}, timeRange: null }
 
+        // Use original items for counts to include those without time
         for (const row of items) {
             const host = row.host || "(unknown)"
             hCounts[host] = (hCounts[host] || 0) + 1
 
             const topic = row.pred_topic || "other"
             tCounts[topic] = (tCounts[topic] || 0) + 1
+        }
 
-            // Fix: Handle string/number timestamp safely
-            let t = null
-            if (row.time_usec) {
-                t = Number(row.time_usec) / 1000
-            } else if (row.time) {
-                t = Number(row.time)
-            }
+        // Use cleanItems for time range
+        let minTime = Infinity
+        let maxTime = -Infinity
 
-            if (t && Number.isFinite(t)) {
-                if (t < minTime) minTime = t
-                if (t > maxTime) maxTime = t
-            }
+        if (cleanItems.length > 0) {
+            minTime = cleanItems[0].t
+            maxTime = cleanItems[cleanItems.length - 1].t
         }
 
         return {
@@ -41,27 +56,14 @@ export default function StatsView({ items }) {
                     ? { start: new Date(minTime), end: new Date(maxTime) }
                     : null,
         }
-    }, [items])
+    }, [items, cleanItems])
 
     const uniqueHosts = Object.keys(hostCounts).length
     const uniqueTopics = Object.keys(topicCounts).length
 
     // --- 2. Session & Day Metrics ---
     const { sessionStats, dayStats } = useMemo(() => {
-        if (!items || !items.length) return { sessionStats: {}, dayStats: {} }
-
-        // Sort by time
-        const sorted = [...items]
-            .map(i => {
-                let t = 0
-                if (i.time_usec) t = Number(i.time_usec) / 1000
-                else if (i.time) t = Number(i.time)
-                return { ...i, t }
-            })
-            .filter(i => i.t && Number.isFinite(i.t))
-            .sort((a, b) => a.t - b.t)
-
-        if (!sorted.length) return { sessionStats: {}, dayStats: {} }
+        if (!cleanItems.length) return { sessionStats: {}, dayStats: {} }
 
         // Sessions (30 min gap)
         let sessions = 0
@@ -73,7 +75,7 @@ export default function StatsView({ items }) {
         // Days
         const days = {}
 
-        sorted.forEach((item, idx) => {
+        cleanItems.forEach((item, idx) => {
             const date = new Date(item.t)
             const dayKey = date.toLocaleDateString()
 
@@ -125,7 +127,7 @@ export default function StatsView({ items }) {
                 quietest: quietestDayEntry,
             },
         }
-    }, [items])
+    }, [cleanItems])
 
     // --- 3. Top Lists ---
     const topHosts = useMemo(() => {
@@ -141,32 +143,24 @@ export default function StatsView({ items }) {
 
     // --- 4. Activity Graph (Hourly) ---
     const timeStats = useMemo(() => {
-        if (!items) return []
+        if (!cleanItems.length) return []
         const hours = new Array(24).fill(0)
-        items.forEach(item => {
-            // Try time_usec (microseconds) or time (milliseconds)
-            let t = null
-            if (item.time_usec) {
-                t = Number(item.time_usec) / 1000
-            } else if (item.time) {
-                t = Number(item.time)
-            }
 
-            if (t && Number.isFinite(t)) {
-                const date = new Date(t)
-                const h = date.getHours()
-                if (h >= 0 && h < 24) {
-                    hours[h]++
-                }
+        cleanItems.forEach(item => {
+            const date = new Date(item.t)
+            const h = date.getHours()
+            if (h >= 0 && h < 24) {
+                hours[h]++
             }
         })
+
         const max = Math.max(...hours)
         return hours.map((count, i) => ({
             hour: i,
             count,
             height: max ? (count / max) * 100 : 0,
         }))
-    }, [items])
+    }, [cleanItems])
 
     // --- Formatters ---
     const fmtDate = d => d?.toLocaleDateString() ?? "-"
@@ -227,12 +221,12 @@ export default function StatsView({ items }) {
                 {/* 4. Top Websites */}
                 <div className="bg-white border border-slate-200 p-6 shadow-sm rounded-xl">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-6 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                        <span className="w-2 h-2 rounded-full bg-orange-500"></span>
                         Top Websites
                     </h3>
                     <div className="space-y-3">
                         {topHosts.map(([host, count], idx) => (
-                            <div key={host} className="flex items-center gap-3 text-sm border-b border-slate-100 pb-2 last:border-0 hover:bg-slate-50 p-1 rounded transition-colors">
+                            <div key={host} className="flex items-center gap-3 text-sm border-b border-slate-100 pb-2 last:border-0 hover:bg-orange-50 p-1 rounded transition-colors">
                                 <div className="w-6 text-slate-400 font-mono text-xs text-right">
                                     {idx + 1}
                                 </div>
@@ -263,11 +257,11 @@ export default function StatsView({ items }) {
                     </div>
                 </div>
 
-                <div className="h-40 flex items-end gap-1 border-b border-slate-100 pb-1">
+                <div className="h-40 flex gap-1 border-b border-slate-100 pb-1">
                     {timeStats.map((d, i) => (
-                        <div key={i} className="flex-1 flex flex-col items-center group relative">
+                        <div key={i} className="flex-1 flex flex-col justify-end items-center group relative">
                             <div
-                                className="w-full bg-slate-100 hover:bg-indigo-500/80 transition-all rounded-t-sm"
+                                className="w-full bg-emerald-200 hover:bg-emerald-500 transition-all rounded-t-sm"
                                 style={{ height: `${Math.max(d.height, 5)}%` }}
                             ></div>
                             {/* Tooltip */}
@@ -278,11 +272,11 @@ export default function StatsView({ items }) {
                     ))}
                 </div>
                 <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-mono uppercase">
-                    <span>00:00</span>
-                    <span>06:00</span>
-                    <span>12:00</span>
-                    <span>18:00</span>
-                    <span>23:00</span>
+                    <span>12 AM</span>
+                    <span>6 AM</span>
+                    <span>12 PM</span>
+                    <span>6 PM</span>
+                    <span>11 PM</span>
                 </div>
             </div>
         </section>
