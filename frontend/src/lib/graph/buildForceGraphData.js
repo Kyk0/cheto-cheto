@@ -1,19 +1,19 @@
 const TOPIC_COLORS = {
-    news: "#ef4444", // Red-500
-    shopping: "#f97316", // Orange-500
-    social: "#ec4899", // Pink-500
-    video: "#10b981", // Emerald-500
-    education: "#06b6d4", // Cyan-500
-    work: "#6366f1", // Indigo-500
-    finance: "#22c55e", // Green-500
-    travel: "#14b8a6", // Teal-500
-    gaming: "#a855f7", // Purple-500
-    entertainment: "#d946ef", // Fuchsia-500
-    tech: "#3b82f6", // Blue-500
-    services: "#8b5cf6", // Violet-500
-    health: "#84cc16", // Lime-500
-    government: "#eab308", // Yellow-500
-    other: "#94a3b8", // Slate-400
+    news: "#ef4444",
+    shopping: "#f97316",
+    social: "#ec4899",
+    video: "#10b981",
+    education: "#06b6d4",
+    work: "#6366f1",
+    finance: "#22c55e",
+    travel: "#14b8a6",
+    gaming: "#a855f7",
+    entertainment: "#d946ef",
+    tech: "#3b82f6",
+    services: "#8b5cf6",
+    health: "#84cc16",
+    government: "#eab308",
+    other: "#94a3b8",
 }
 
 function topicColor(topic) {
@@ -208,7 +208,7 @@ export function buildForceGraphData(items) {
     let hostLinks = Array.from(edgesMap.values())
     if (hostLinks.length > 0) {
         hostLinks.sort((a, b) => b.weight - a.weight)
-        // Keep top 80% of connections
+
         const keep = Math.max(1, Math.ceil(hostLinks.length * 0.8))
         hostLinks = hostLinks.slice(0, keep)
     }

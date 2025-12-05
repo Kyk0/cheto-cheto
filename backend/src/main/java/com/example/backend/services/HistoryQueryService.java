@@ -68,15 +68,13 @@ public class HistoryQueryService {
 
         List<MlDataResponse> responses = mlClientService.sendSafariDbToMl(file, zipFile, "/predict-history/safari");
 
-        // Normalize timestamps if they are in Mac Absolute Time (seconds since 2001)
-        // Unix Epoch (1970) vs Mac Epoch (2001) difference is 978307200 seconds
         long MAC_TO_UNIX_OFFSET = 978307200L;
-        long THRESHOLD_MICROSECONDS = 100000000000L; // 100 billion - well below valid 2025 unix micros
+        long THRESHOLD_MICROSECONDS = 100000000000L;
 
         for (MlDataResponse row : responses) {
             Long t = row.getTime_usec();
             if (t != null && t < THRESHOLD_MICROSECONDS) {
-                // It's likely seconds (Mac Absolute Time)
+
                 long unixSeconds = t + MAC_TO_UNIX_OFFSET;
                 row.setTime_usec(unixSeconds * 1_000_000L);
             }

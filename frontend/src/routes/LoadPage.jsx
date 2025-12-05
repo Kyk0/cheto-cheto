@@ -64,7 +64,7 @@ export default function LoadPage() {
                             </p>
                         </div>
 
-                        {/* Safari History DB File Input */}
+
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-slate-700 mb-2">Safari History (DB)</label>
                             <label
@@ -107,7 +107,7 @@ export default function LoadPage() {
                             </label>
                         </div>
 
-                        {/* Google Takeout ZIP File Input */}
+
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-slate-700 mb-2">Google Takeout (ZIP)</label>
                             <label

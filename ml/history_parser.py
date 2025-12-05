@@ -149,11 +149,11 @@ def read_history_db(raw_bytes: bytes) -> list[dict]:
 
     header = raw_bytes[:16]
 
-    # SQLite signature
+
     if header.startswith(b"SQLite format 3"):
         return _rows_from_sqlite(raw_bytes)
 
-    # ZIP signature
+
     if header[:2] == b"PK":
         return _rows_from_zip(raw_bytes)
 

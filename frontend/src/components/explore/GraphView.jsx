@@ -13,10 +13,9 @@ export default function GraphView({ items, onViewHistory }) {
 
     return (
         <section className="w-full h-[600px] flex flex-col relative bg-white border border-slate-200 overflow-hidden shadow-sm rounded-xl">
-            {/* Background Gradient - Removed for pure white */}
-            {/* <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50 opacity-50 pointer-events-none"></div> */}
 
-            {/* Header / Search */}
+
+
             <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
                 <div className="pointer-events-auto">
                     <h2 className="text-slate-900 font-bold text-lg">
@@ -27,7 +26,7 @@ export default function GraphView({ items, onViewHistory }) {
                     </p>
                 </div>
 
-                {/* Search Bar */}
+
                 <div className="pointer-events-auto w-64 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -40,7 +39,7 @@ export default function GraphView({ items, onViewHistory }) {
                 </div>
             </div>
 
-            {/* Main Content Area */}
+
             <div className="flex-1 relative w-full h-full overflow-hidden">
                 <GraphCanvas
                     items={items}
@@ -52,7 +51,7 @@ export default function GraphView({ items, onViewHistory }) {
                     }}
                 />
 
-                {/* Details Panel */}
+
                 <NodeDetailsPanel
                     node={selectedNode}
                     onClose={() => setSelectedNode(null)}

@@ -25,7 +25,7 @@ export default function HistoryView({ items, initialFilter = "" }) {
 
     return (
         <section className="w-full max-w-6xl h-[85vh] flex flex-col gap-4">
-            {/* Header & Filter */}
+
             <div className="bg-white border border-slate-200 p-4 shadow-sm rounded-lg flex flex-col sm:flex-row gap-4 items-center justify-between">
                 <div>
                     <h2 className="text-lg font-bold text-slate-800">History Explorer</h2>
@@ -45,7 +45,7 @@ export default function HistoryView({ items, initialFilter = "" }) {
                 </div>
             </div>
 
-            {/* List */}
+
             <div className="flex-1 bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col">
                 <div className="overflow-y-auto flex-1 p-0">
                     {filteredItems.length === 0 ? (

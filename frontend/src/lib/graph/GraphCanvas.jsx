@@ -27,7 +27,7 @@ export default function GraphCanvas({
         if (!fg) return
         if (!nodes.length) return
 
-        // Physics: Balanced for new sizes
+
         const charge = d3.forceManyBody().strength(-400)
         const forceX = d3.forceX(0).strength(0.08)
         const forceY = d3.forceY(0).strength(0.08)
@@ -40,7 +40,7 @@ export default function GraphCanvas({
 
         const collision = d3.forceCollide().radius(n => {
             const r = Number(n.radius) || 5
-            return r * 2.0 // Tighter spacing
+            return r * 2.0
         }).strength(0.8)
 
         fg.d3Force("charge", charge)
@@ -124,19 +124,19 @@ export default function GraphCanvas({
         // Visibility Logic
         let alpha = 1
         if (searchQuery) {
-            // Search Mode: Dim everything except matches
+
             alpha = matchesSearch ? 1 : 0.1
         } else {
-            // Hover Mode: Dim non-neighbors
+
             alpha = highlighted ? 1 : 0.1
         }
 
-        // Size Logic: "Make maximum size small and minimum bigger"
+
         let baseRadius = Number(node.radius) || 5
-        // Clamp radius to a tighter range (e.g., 6 to 25 instead of 5 to 50)
+
         baseRadius = Math.max(6, Math.min(baseRadius, 25))
 
-        // Hover Scale: Subtle, not dramatic
+
         if (isHovered) baseRadius *= 1.2
         if (isNeighbor) baseRadius *= 1.1
 
@@ -145,22 +145,22 @@ export default function GraphCanvas({
         ctx.save()
         ctx.globalAlpha = alpha
 
-        // Node Body
+
         ctx.beginPath()
         ctx.fillStyle = node.color || "#6366f1"
         ctx.arc(node.x, node.y, baseRadius, 0, 2 * Math.PI)
         ctx.fill()
 
-        // Border
+
         ctx.strokeStyle = "#ffffff"
         ctx.lineWidth = (isHovered ? 3 : 1.5) / globalScale
         ctx.stroke()
 
-        // Labels
+
         const fontSize = Math.max(4, baseRadius * 0.6)
         const screenFontSize = fontSize * globalScale
 
-        // Show label if hovered, neighbor, or matches search (if searching)
+
         const showLabel = isHovered || isNeighbor || (searchQuery && matchesSearch) || (screenFontSize > 5)
 
         if (showLabel && label) {
@@ -168,15 +168,15 @@ export default function GraphCanvas({
             ctx.textAlign = "center"
             ctx.textBaseline = "middle"
 
-            // Outline
-            ctx.strokeStyle = "rgba(0,0,0,0.8)" // Dark outline for light text
+
+            ctx.strokeStyle = "rgba(0,0,0,0.8)"
             ctx.lineWidth = 3 / globalScale
             ctx.lineJoin = "round"
 
             const textY = node.y + baseRadius + (fontSize * 0.8)
 
             ctx.strokeText(label, node.x, textY)
-            ctx.fillStyle = "#f1f5f9" // Slate-100 text (Light for dark theme)
+            ctx.fillStyle = "#f1f5f9"
             ctx.fillText(label, node.x, textY)
         }
 
@@ -189,7 +189,7 @@ export default function GraphCanvas({
         const base = srcNode?.color || "#94a3b8"
 
         if (searchQuery) {
-            // In search mode, dim links unless both ends match? Or just keep them dim.
+
             return "rgba(148,163,184,0.1)"
         }
 
@@ -209,9 +209,9 @@ export default function GraphCanvas({
     }
 
     function handleBgClick() {
-        // Clear search if clicked on background? 
-        // Or just clear hover.
-        // Let's rely on the parent for search clearing for now.
+
+
+
     }
 
     if (!nodes.length) {
@@ -227,7 +227,7 @@ export default function GraphCanvas({
             <ForceGraph2D
                 ref={fgRef}
                 graphData={{ nodes, links }}
-                backgroundColor="rgba(0,0,0,0)" // Transparent for gradient bg
+                backgroundColor="rgba(0,0,0,0)"
                 nodeId="id"
                 nodeRelSize={4}
                 nodeVal={node => Number(node.radius) || 5}
@@ -239,9 +239,9 @@ export default function GraphCanvas({
                 linkCurvature={0}
                 onNodeHover={handleNodeHover}
                 onNodeClick={onNodeClick}
-                onBackgroundClick={onBackgroundClick} // Pass up to clear search
+                onBackgroundClick={onBackgroundClick}
                 enableNodeDrag={true}
-                // Stability: High decay to stop jumping
+
                 cooldownTicks={Infinity}
                 d3AlphaDecay={0.05}
                 d3VelocityDecay={0.4}

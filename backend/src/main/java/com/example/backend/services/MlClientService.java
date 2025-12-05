@@ -57,9 +57,7 @@ public class MlClientService {
             }
             body.add("file", fileResource);
         } else if (zipFile != null && !zipFile.isEmpty()) {
-            // Fallback: If no DB file is provided but a ZIP is, send the ZIP as "file"
-            // to satisfy the ML service interface which likely expects a "file" part.
-            // We give it a .zip extension in the filename so the receiver might know.
+
             ByteArrayResource fileResource;
             try {
                 fileResource = new ByteArrayResource(zipFile.getBytes()) {

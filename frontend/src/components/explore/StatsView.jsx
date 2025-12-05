@@ -3,18 +3,15 @@ import { useMemo } from "react"
 export default function StatsView({ items }) {
     const totalItems = items?.length ?? 0
 
-    // --- 0. Pre-process Items with Time ---
+
     const cleanItems = useMemo(() => {
         if (!items) return []
         return items
             .map(i => {
                 let t = 0
-                // Handle various time formats
                 if (i.time_usec) t = Number(i.time_usec) / 1000
                 else if (i.time) t = Number(i.time)
 
-                // Sanity check for reasonable year (e.g. > 1990) to filter bad data
-                // 631152000000 is roughly year 1990
                 if (t < 631152000000) t = 0
 
                 return { ...i, t }
@@ -23,14 +20,14 @@ export default function StatsView({ items }) {
             .sort((a, b) => a.t - b.t)
     }, [items])
 
-    // --- 1. Basic Counts & Time Range ---
+
     const { hostCounts, topicCounts, timeRange } = useMemo(() => {
         const hCounts = {}
         const tCounts = {}
 
         if (!items) return { hostCounts: {}, topicCounts: {}, timeRange: null }
 
-        // Use original items for counts to include those without time
+
         for (const row of items) {
             const host = row.host || "(unknown)"
             hCounts[host] = (hCounts[host] || 0) + 1
@@ -39,7 +36,7 @@ export default function StatsView({ items }) {
             tCounts[topic] = (tCounts[topic] || 0) + 1
         }
 
-        // Use cleanItems for time range
+
         let minTime = Infinity
         let maxTime = -Infinity
 
@@ -61,33 +58,31 @@ export default function StatsView({ items }) {
     const uniqueHosts = Object.keys(hostCounts).length
     const uniqueTopics = Object.keys(topicCounts).length
 
-    // --- 2. Session & Day Metrics ---
+
     const { sessionStats, dayStats } = useMemo(() => {
         if (!cleanItems.length) return { sessionStats: {}, dayStats: {} }
 
-        // Sessions (30 min gap)
+
         let sessions = 0
         let currentSessionSize = 0
         let maxSessionSize = 0
         let totalSessionSize = 0
         let lastTime = 0
 
-        // Days
+
         const days = {}
 
         cleanItems.forEach((item, idx) => {
             const date = new Date(item.t)
             const dayKey = date.toLocaleDateString()
-
-            // Day stats
             days[dayKey] = (days[dayKey] || 0) + 1
 
-            // Session stats
+
             if (idx === 0) {
                 sessions = 1
                 currentSessionSize = 1
             } else {
-                const gap = (item.t - lastTime) / 1000 / 60 // minutes
+                const gap = (item.t - lastTime) / 1000 / 60
                 if (gap > 30) {
                     sessions++
                     if (currentSessionSize > maxSessionSize)
@@ -100,11 +95,11 @@ export default function StatsView({ items }) {
             }
             lastTime = item.t
         })
-        // Final session check
+
         if (currentSessionSize > maxSessionSize) maxSessionSize = currentSessionSize
         totalSessionSize += currentSessionSize
 
-        // Day aggregation
+
         const activeDays = Object.keys(days).length
         const dayCounts = Object.values(days)
         const avgPerDay =
@@ -129,7 +124,7 @@ export default function StatsView({ items }) {
         }
     }, [cleanItems])
 
-    // --- 3. Top Lists ---
+
     const topHosts = useMemo(() => {
         return Object.entries(hostCounts)
             .sort((a, b) => b[1] - a[1])
@@ -141,7 +136,7 @@ export default function StatsView({ items }) {
             .sort((a, b) => b[1] - a[1])
     }, [topicCounts])
 
-    // --- 4. Activity Graph (Hourly) ---
+
     const timeStats = useMemo(() => {
         if (!cleanItems.length) return []
         const hours = new Array(24).fill(0)
@@ -162,12 +157,12 @@ export default function StatsView({ items }) {
         }))
     }, [cleanItems])
 
-    // --- Formatters ---
+
     const fmtDate = d => d?.toLocaleDateString() ?? "-"
 
     return (
         <section className="w-full max-w-6xl space-y-8 pb-12">
-            {/* 1. Quick Summary */}
+
             <div className="bg-white border border-slate-200 p-6 shadow-sm rounded-xl">
                 <h2 className="text-xl font-bold text-slate-900 mb-2">
                     History Overview
@@ -180,7 +175,7 @@ export default function StatsView({ items }) {
                 </p>
             </div>
 
-            {/* 2. Core Metrics Grid */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard label="Total Records" value={totalItems.toLocaleString()} />
                 <MetricCard label="Unique Hosts" value={uniqueHosts.toLocaleString()} />
@@ -194,7 +189,7 @@ export default function StatsView({ items }) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* 3. Top Topics */}
+
                 <div className="bg-white border border-slate-200 p-6 shadow-sm rounded-xl">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-6 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
@@ -218,7 +213,7 @@ export default function StatsView({ items }) {
                     </div>
                 </div>
 
-                {/* 4. Top Websites */}
+
                 <div className="bg-white border border-slate-200 p-6 shadow-sm rounded-xl">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide mb-6 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-orange-500"></span>
@@ -244,7 +239,7 @@ export default function StatsView({ items }) {
                 </div>
             </div>
 
-            {/* 5. Day-Level Summary & Graph */}
+
             <div className="bg-white border border-slate-200 p-6 shadow-sm rounded-xl">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wide flex items-center gap-2">
@@ -264,7 +259,7 @@ export default function StatsView({ items }) {
                                 className="w-full bg-emerald-200 hover:bg-emerald-500 transition-all rounded-t-sm"
                                 style={{ height: `${Math.max(d.height, 5)}%` }}
                             ></div>
-                            {/* Tooltip */}
+
                             <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-800 text-white text-[10px] px-2 py-1 rounded whitespace-nowrap z-10 shadow-xl">
                                 {d.hour}:00 — {d.count} visits
                             </div>

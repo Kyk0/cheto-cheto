@@ -1,4 +1,4 @@
-// src/routes/ExplorePage.jsx
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useHistory } from "../context/HistoryContext";
@@ -26,7 +26,7 @@ export default function ExplorePage() {
         }
     };
 
-    // базовые состояния загрузки / ошибки / пустых данных
+
     let content;
 
     if (isLoading) {
@@ -62,7 +62,7 @@ export default function ExplorePage() {
             </div>
         );
     } else {
-        // нормальный режим: данные есть
+
         content = (
             <>
                 <TabsBar activeTab={activeTab} onChange={handleTabChange} />
