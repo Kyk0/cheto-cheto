@@ -9,7 +9,7 @@ export default function HomePage() {
             </div>
 
             <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
-                mycoolhistory.app
+                MyCoolHistory
             </h1>
 
             <p className="text-slate-600 max-w-lg mb-10 text-lg leading-relaxed font-light">
